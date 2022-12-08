@@ -286,14 +286,10 @@ namespace osu.Framework.Graphics.OpenGL
         protected override IShader CreateShader(string name, params IShaderPart[] parts) => new GLShader(this, name, parts.Cast<GLShaderPart>().ToArray());
 
         public override IFrameBuffer CreateFrameBuffer(RenderBufferFormat[]? renderBufferFormats = null, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, TextureFormat textureFormat = TextureFormat.SRGBA8)
-        {
-            return new GLFrameBuffer(this, renderBufferFormats, filteringMode, textureFormat);
-        }
+            => new GLFrameBuffer(this, renderBufferFormats, filteringMode, textureFormat);
 
         protected override INativeTexture CreateNativeTexture(int width, int height, bool manualMipmaps = false, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, Color initialisationColour = default, TextureFormat textureFormat = TextureFormat.SRGB8)
-        {
-            return new GLTexture(this, width, height, manualMipmaps, filteringMode, initialisationColour, textureFormat);
-        }
+            => new GLTexture(this, width, height, manualMipmaps, filteringMode, initialisationColour, textureFormat);
 
         protected override INativeTexture CreateNativeVideoTexture(int width, int height) => new GLVideoTexture(this, width, height);
 
