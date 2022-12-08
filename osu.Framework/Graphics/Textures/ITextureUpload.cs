@@ -6,16 +6,15 @@
 using System;
 using osu.Framework.Graphics.Primitives;
 using osuTK.Graphics.ES30;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace osu.Framework.Graphics.Textures
 {
     public interface ITextureUpload : IDisposable
     {
         /// <summary>
-        /// The raw data to be uploaded.
+        /// The raw byte data to be uploaded.
         /// </summary>
-        ReadOnlySpan<Rgba32> Data { get; }
+        ReadOnlySpan<byte> ByteData { get; }
 
         /// <summary>
         /// The target mipmap level to upload into.
@@ -31,5 +30,21 @@ namespace osu.Framework.Graphics.Textures
         /// The texture format for this upload.
         /// </summary>
         PixelFormat Format { get; }
+
+        /// <summary>
+        /// The storage type for this upload.
+        /// </summary>
+        PixelType Type { get; }
+
+        /// <summary>
+        /// The bytes per pixel for this upload.
+        /// </summary>
+        int BytesPerPixel { get; }
+
+        /// <summary>
+        /// The number of pixels in the data to be uploaded, calculated
+        /// based on <see cref="ByteData"/> and <see cref="BytesPerPixel"/>.
+        /// </summary>
+        sealed int PixelCount => ByteData.Length / BytesPerPixel;
     }
 }

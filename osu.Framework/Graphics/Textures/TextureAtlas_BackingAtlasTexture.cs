@@ -3,6 +3,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using NuGet.Common;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Rendering;
 using SixLabors.ImageSharp.PixelFormats;
@@ -47,10 +48,13 @@ namespace osu.Framework.Graphics.Textures
 
             internal override void SetData(ITextureUpload upload, WrapMode wrapModeS, WrapMode wrapModeT, Opacity? opacity)
             {
+                if (!(upload is TextureUpload<Rgba32> uploadRgba32))
+                    throw new ArgumentException($"Unsupported texture upload; only {nameof(TextureUpload<Rgba32>)} allowed");
+
                 // Can only perform padding when the bounds are a sub-part of the texture
                 RectangleI middleBounds = upload.Bounds;
 
-                if (middleBounds.IsEmpty || middleBounds.Width * middleBounds.Height > upload.Data.Length)
+                if (middleBounds.IsEmpty || middleBounds.Width * middleBounds.Height > upload.PixelCount)
                 {
                     // For a texture atlas, we don't care about opacity, so we avoid
                     // any computations related to it by assuming it to be mixed.
@@ -60,7 +64,7 @@ namespace osu.Framework.Graphics.Textures
 
                 int actualPadding = padding / (1 << upload.Level);
 
-                var data = upload.Data;
+                var data = uploadRgba32.Data;
 
                 uploadCornerPadding(data, middleBounds, actualPadding, wrapModeS != WrapMode.None && wrapModeT != WrapMode.None);
                 uploadHorizontalPadding(data, middleBounds, actualPadding, wrapModeS != WrapMode.None);

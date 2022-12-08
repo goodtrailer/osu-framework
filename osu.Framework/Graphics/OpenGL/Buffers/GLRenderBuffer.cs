@@ -4,6 +4,7 @@
 #nullable disable
 
 using System;
+using osu.Framework.Graphics.Rendering;
 using osu.Framework.Platform;
 using osuTK;
 using osuTK.Graphics.ES30;
@@ -19,10 +20,17 @@ namespace osu.Framework.Graphics.OpenGL.Buffers
 
         private FramebufferAttachment attachment;
 
-        public GLRenderBuffer(GLRenderer renderer, RenderbufferInternalFormat format)
+        public GLRenderBuffer(GLRenderer renderer, RenderBufferFormat format)
         {
             this.renderer = renderer;
-            this.format = format;
+            this.format = format switch
+            {
+                RenderBufferFormat.D16 => RenderbufferInternalFormat.DepthComponent16,
+                RenderBufferFormat.D32 => RenderbufferInternalFormat.DepthComponent32f,
+                RenderBufferFormat.D24S8 => RenderbufferInternalFormat.Depth24Stencil8,
+                RenderBufferFormat.D32S8 => RenderbufferInternalFormat.Depth32fStencil8,
+                _ => throw new ArgumentException($"Unsupported {nameof(RenderbufferInternalFormat)}: {format}", nameof(format)),
+            };
 
             renderBuffer = GL.GenRenderbuffer();
 
@@ -30,10 +38,10 @@ namespace osu.Framework.Graphics.OpenGL.Buffers
 
             // OpenGL docs don't specify that this is required, but seems to be required on some platforms
             // to correctly attach in the GL.FramebufferRenderbuffer() call below
-            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, format, 1, 1);
+            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, this.format, 1, 1);
 
-            attachment = format.GetAttachmentType();
-            sizePerPixel = format.GetBytesPerPixel();
+            attachment = this.format.GetAttachmentType();
+            sizePerPixel = this.format.GetBytesPerPixel();
 
             GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, attachment, RenderbufferTarget.Renderbuffer, renderBuffer);
         }

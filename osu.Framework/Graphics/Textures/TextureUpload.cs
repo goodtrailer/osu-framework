@@ -11,7 +11,6 @@ using osu.Framework.Extensions.ImageExtensions;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Rendering;
 using osu.Framework.Logging;
-using osuTK.Graphics.ES30;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using StbiSharp;
@@ -22,24 +21,14 @@ namespace osu.Framework.Graphics.Textures
     /// Low level class for queueing texture uploads to the GPU.
     /// Should be manually disposed if not queued for upload via <see cref="Texture.SetData(ITextureUpload)"/>.
     /// </summary>
-    public class TextureUpload : ITextureUpload
+    public class TextureUpload<TPixel> : GenericTextureUpload<TPixel>
+        where TPixel : unmanaged, IPixel<TPixel>
     {
-        /// <summary>
-        /// The target mipmap level to upload into.
-        /// </summary>
-        public int Level { get; set; }
+        public override int Level { get; set; }
 
-        /// <summary>
-        /// The texture format for this upload.
-        /// </summary>
-        public PixelFormat Format => PixelFormat.Rgba;
+        public override RectangleI Bounds { get; set; }
 
-        /// <summary>
-        /// The target bounds for this upload. If not specified, will assume to be (0, 0, width, height).
-        /// </summary>
-        public RectangleI Bounds { get; set; }
-
-        public ReadOnlySpan<Rgba32> Data => pixelMemory.Span;
+        public override ReadOnlySpan<TPixel> Data => pixelMemory.Span;
 
         public int Width => image?.Width ?? 0;
 
@@ -48,15 +37,15 @@ namespace osu.Framework.Graphics.Textures
         /// <summary>
         /// The backing texture. A handle is kept to avoid early GC.
         /// </summary>
-        private readonly Image<Rgba32> image;
+        private readonly Image<TPixel> image;
 
-        private ReadOnlyPixelMemory<Rgba32> pixelMemory;
+        private ReadOnlyPixelMemory<TPixel> pixelMemory;
 
         /// <summary>
-        /// Create an upload from a <see cref="TextureUpload"/>. This is the preferred method.
+        /// Create an upload from a <see cref="Image{TPixel}"/>. This is the preferred method.
         /// </summary>
         /// <param name="image">The texture to upload.</param>
-        public TextureUpload(Image<Rgba32> image)
+        public TextureUpload(Image<TPixel> image)
         {
             this.image = image;
             pixelMemory = image.CreateReadOnlyPixelMemory();
@@ -69,13 +58,13 @@ namespace osu.Framework.Graphics.Textures
         /// </summary>
         /// <param name="stream">The image content.</param>
         public TextureUpload(Stream stream)
-            : this(LoadFromStream<Rgba32>(stream))
+            : this(LoadFromStream(stream))
         {
         }
 
         private static bool stbiNotFound;
 
-        internal static Image<TPixel> LoadFromStream<TPixel>(Stream stream) where TPixel : unmanaged, IPixel<TPixel>
+        internal static Image<TPixel> LoadFromStream(Stream stream)
         {
             if (stbiNotFound)
                 return Image.Load<TPixel>(stream);
@@ -114,7 +103,7 @@ namespace osu.Framework.Graphics.Textures
 
         private bool disposed;
 
-        public void Dispose()
+        public override void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
@@ -132,5 +121,25 @@ namespace osu.Framework.Graphics.Textures
         }
 
         #endregion
+    }
+
+    public class TextureUpload : TextureUpload<Rgba32>
+    {
+        /// <inheritdoc/>
+        public TextureUpload(Image<Rgba32> image)
+            : base(image)
+        {
+        }
+
+        /// <inheritdoc/>
+        public TextureUpload(Stream stream)
+            : base(stream)
+        {
+        }
+
+        /// <inheritdoc/>
+        public TextureUpload()
+        {
+        }
     }
 }

@@ -4,7 +4,7 @@
 using System;
 using osu.Framework.Graphics.Textures;
 using osuTK;
-using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp;
 using osu.Framework.Graphics.Shaders;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Rendering.Vertices;
@@ -292,14 +292,15 @@ namespace osu.Framework.Graphics.Rendering
         /// </summary>
         /// <param name="renderBufferFormats">Any render buffer formats.</param>
         /// <param name="filteringMode">The texture filtering mode.</param>
+        /// <param name="textureFormat">The texture format of the frame buffer's texture attachment.</param>
         /// <returns>The <see cref="IFrameBuffer"/>.</returns>
-        IFrameBuffer CreateFrameBuffer(RenderBufferFormat[]? renderBufferFormats = null, TextureFilteringMode filteringMode = TextureFilteringMode.Linear);
+        IFrameBuffer CreateFrameBuffer(RenderBufferFormat[]? renderBufferFormats = null, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, TextureFormat textureFormat = TextureFormat.SRGBA8);
 
         /// <summary>
         /// Creates a new texture.
         /// </summary>
         Texture CreateTexture(int width, int height, bool manualMipmaps = false, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, WrapMode wrapModeS = WrapMode.None,
-                              WrapMode wrapModeT = WrapMode.None, Rgba32 initialisationColour = default);
+                              WrapMode wrapModeT = WrapMode.None, Color initialisationColour = default, TextureFormat textureFormat = TextureFormat.SRGBA8);
 
         /// <summary>
         /// Creates a new video texture.

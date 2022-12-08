@@ -6,25 +6,23 @@
 using System;
 using System.Buffers;
 using osu.Framework.Graphics.Primitives;
-using osuTK.Graphics.ES30;
 using SixLabors.ImageSharp.Memory;
 using SixLabors.ImageSharp.PixelFormats;
 
 namespace osu.Framework.Graphics.Textures
 {
-    public class MemoryAllocatorTextureUpload : ITextureUpload
+    public class MemoryAllocatorTextureUpload<TPixel> : GenericTextureUpload<TPixel>
+        where TPixel : unmanaged, IPixel<TPixel>
     {
-        public Span<Rgba32> RawData => memoryOwner.Memory.Span;
+        public override int Level { get; set; }
 
-        public ReadOnlySpan<Rgba32> Data => RawData;
+        public override RectangleI Bounds { get; set; }
 
-        private readonly IMemoryOwner<Rgba32> memoryOwner;
+        public override ReadOnlySpan<TPixel> Data => RawData;
 
-        public int Level { get; set; }
+        public Span<TPixel> RawData => memoryOwner.Memory.Span;
 
-        public virtual PixelFormat Format => PixelFormat.Rgba;
-
-        public RectangleI Bounds { get; set; }
+        private readonly IMemoryOwner<TPixel> memoryOwner;
 
         /// <summary>
         /// Create an empty raw texture with an efficient shared memory backing.
@@ -34,14 +32,14 @@ namespace osu.Framework.Graphics.Textures
         /// <param name="memoryAllocator">The source to retrieve memory from. Shared default is used if null.</param>
         public MemoryAllocatorTextureUpload(int width, int height, MemoryAllocator memoryAllocator = null)
         {
-            memoryOwner = (memoryAllocator ?? SixLabors.ImageSharp.Configuration.Default.MemoryAllocator).Allocate<Rgba32>(width * height);
+            memoryOwner = (memoryAllocator ?? SixLabors.ImageSharp.Configuration.Default.MemoryAllocator).Allocate<TPixel>(width * height);
         }
 
         #region IDisposable Support
 
         private bool disposed;
 
-        public void Dispose()
+        public override void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
@@ -58,5 +56,14 @@ namespace osu.Framework.Graphics.Textures
         }
 
         #endregion
+    }
+
+    public class MemoryAllocatorTextureUpload : MemoryAllocatorTextureUpload<Rgba32>
+    {
+        /// <inheritdoc/>
+        public MemoryAllocatorTextureUpload(int width, int height, MemoryAllocator memoryAllocator = null)
+            : base(width, height, memoryAllocator)
+        {
+        }
     }
 }

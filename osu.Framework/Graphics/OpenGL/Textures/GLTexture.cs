@@ -14,6 +14,7 @@ using osu.Framework.Graphics.Textures;
 using osu.Framework.Platform;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using System.Diagnostics;
 
 namespace osu.Framework.Graphics.OpenGL.Textures
 {
@@ -51,7 +52,8 @@ namespace osu.Framework.Graphics.OpenGL.Textures
         private bool manualMipmaps;
 
         private readonly All filteringMode;
-        private readonly Rgba32 initialisationColour;
+        private readonly TextureComponentCount internalFormat;
+        private readonly Color initialisationColour;
 
         /// <summary>
         /// Creates a new <see cref="GLTexture"/>.
@@ -62,14 +64,16 @@ namespace osu.Framework.Graphics.OpenGL.Textures
         /// <param name="manualMipmaps">Whether manual mipmaps will be uploaded to the texture. If false, the texture will compute mipmaps automatically.</param>
         /// <param name="filteringMode">The filtering mode.</param>
         /// <param name="initialisationColour">The colour to initialise texture levels with (in the case of sub region initial uploads).</param>
-        public GLTexture(GLRenderer renderer, int width, int height, bool manualMipmaps = false, All filteringMode = All.Linear, Rgba32 initialisationColour = default)
+        /// <param name="internalFormat">The internal format of the texture (which upload formats should be the same as, or at least similar to.</param>
+        public GLTexture(GLRenderer renderer, int width, int height, bool manualMipmaps = false, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, Color initialisationColour = default, TextureFormat internalFormat = TextureFormat.SRGBA8)
         {
             Renderer = renderer;
             Width = width;
             Height = height;
             this.manualMipmaps = manualMipmaps;
-            this.filteringMode = filteringMode;
+            this.filteringMode = filteringMode.ToGLFilteringMode();
             this.initialisationColour = initialisationColour;
+            this.internalFormat = internalFormat.ToGLTextureComponentCount();
         }
 
         #region Disposal
@@ -167,6 +171,12 @@ namespace osu.Framework.Graphics.OpenGL.Textures
 
         public void SetData(ITextureUpload upload)
         {
+            if (!internalFormat.SupportsPixelFormat(upload.Format))
+                throw new ArgumentException($"Texture with internal format {internalFormat} does not support upload with pixel format {upload.Format}.");
+
+            if (!internalFormat.SupportsPixelType(upload.Type))
+                throw new ArgumentException($"Texture with internal format {internalFormat} does not support upload with pixel type {upload.Type}.");
+
             lock (uploadQueue)
             {
                 bool requireUpload = uploadQueue.Count == 0;
@@ -191,7 +201,7 @@ namespace osu.Framework.Graphics.OpenGL.Textures
             {
                 using (upload)
                 {
-                    fixed (Rgba32* ptr = upload.Data)
+                    fixed (byte* ptr = upload.ByteData)
                         DoUpload(upload, (IntPtr)ptr);
 
                     didUpload = true;
@@ -238,13 +248,16 @@ namespace osu.Framework.Graphics.OpenGL.Textures
 
         protected virtual void DoUpload(ITextureUpload upload, IntPtr dataPointer)
         {
-            // Do we need to generate a new texture?
+            Debug.Assert(internalFormat.SupportsPixelFormat(upload.Format));
+            Debug.Assert(internalFormat.SupportsPixelType(upload.Type));
+
+            // Do we need to create a new texture?
             if (textureId <= 0 || internalWidth != Width || internalHeight != Height)
             {
                 internalWidth = Width;
                 internalHeight = Height;
 
-                // We only need to generate a new texture if we don't have one already. Otherwise just re-use the current one.
+                // We only need to generate a new texture name if we don't have one already. Otherwise just re-use the current one.
                 if (textureId <= 0)
                 {
                     int[] textures = new int[1];
@@ -273,15 +286,15 @@ namespace osu.Framework.Graphics.OpenGL.Textures
 
                 if ((Width == upload.Bounds.Width && Height == upload.Bounds.Height) || dataPointer == IntPtr.Zero)
                 {
-                    updateMemoryUsage(upload.Level, (long)Width * Height * 4);
-                    GL.TexImage2D(TextureTarget2d.Texture2D, upload.Level, TextureComponentCount.Srgb8Alpha8, Width, Height, 0, upload.Format, PixelType.UnsignedByte, dataPointer);
+                    updateMemoryUsage(upload.Level, (long)Width * Height * upload.BytesPerPixel);
+                    GL.TexImage2D(TextureTarget2d.Texture2D, upload.Level, internalFormat, Width, Height, 0, upload.Format, upload.Type, dataPointer);
                 }
                 else
                 {
-                    initializeLevel(upload.Level, Width, Height);
+                    initialiseLevel(upload.Level, Width, Height);
 
                     GL.TexSubImage2D(TextureTarget2d.Texture2D, upload.Level, upload.Bounds.X, upload.Bounds.Y, upload.Bounds.Width, upload.Bounds.Height, upload.Format,
-                        PixelType.UnsignedByte, dataPointer);
+                        upload.Type, dataPointer);
                 }
             }
             // Just update content of the current texture
@@ -297,7 +310,7 @@ namespace osu.Framework.Graphics.OpenGL.Textures
 
                     while (Width / d > 0)
                     {
-                        initializeLevel(level, Width / d, Height / d);
+                        initialiseLevel(level, Width / d, Height / d);
                         level++;
                         d *= 2;
                     }
@@ -308,27 +321,65 @@ namespace osu.Framework.Graphics.OpenGL.Textures
                 int div = (int)Math.Pow(2, upload.Level);
 
                 GL.TexSubImage2D(TextureTarget2d.Texture2D, upload.Level, upload.Bounds.X / div, upload.Bounds.Y / div, upload.Bounds.Width / div, upload.Bounds.Height / div,
-                    upload.Format, PixelType.UnsignedByte, dataPointer);
+                    upload.Format, upload.Type, dataPointer);
             }
         }
 
-        private void initializeLevel(int level, int width, int height)
+        private void initialiseLevel(int level, int width, int height)
         {
-            using (var image = createBackingImage(width, height))
+            switch (internalFormat)
+            {
+                case TextureComponentCount.Luminance:
+                    initialiseLevelImpl<L8>(level, width, height, PixelFormat.Luminance, PixelType.UnsignedByte);
+                    break;
+
+                case TextureComponentCount.Alpha:
+                    initialiseLevelImpl<A8>(level, width, height, PixelFormat.Alpha, PixelType.UnsignedByte);
+                    break;
+
+                case TextureComponentCount.Rgb8:
+                case TextureComponentCount.Srgb8:
+                case TextureComponentCount.Rgb565:
+                    initialiseLevelImpl<Rgb24>(level, width, height, PixelFormat.Rgb, PixelType.UnsignedByte);
+                    break;
+
+                case TextureComponentCount.Rgba8:
+                case TextureComponentCount.Srgb8Alpha8:
+                case TextureComponentCount.Rgb5A1:
+                case TextureComponentCount.Rgba4:
+                    initialiseLevelImpl<Rgba32>(level, width, height, PixelFormat.Rgba, PixelType.UnsignedByte);
+                    break;
+
+                case TextureComponentCount.Rgba16f:
+                case TextureComponentCount.Rgba32f:
+                    initialiseLevelImpl<RgbaVector>(level, width, height, PixelFormat.Rgba, PixelType.Float);
+                    break;
+
+                default:
+                    Debug.Fail($"Invalid internal format {internalFormat}");
+                    break;
+            }
+        }
+
+        private void initialiseLevelImpl<TPixel>(int level, int width, int height, PixelFormat format, PixelType type)
+            where TPixel : unmanaged, IPixel<TPixel>
+        {
+            using (var image = createBackingImage<TPixel>(width, height))
             using (var pixels = image.CreateReadOnlyPixelSpan())
             {
-                updateMemoryUsage(level, (long)width * height * 4);
-                GL.TexImage2D(TextureTarget2d.Texture2D, level, TextureComponentCount.Srgb8Alpha8, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte,
+                updateMemoryUsage(level, (long)width * height * internalFormat.GetBytesPerPixel());
+                GL.TexImage2D(TextureTarget2d.Texture2D, level, internalFormat, width, height, 0, format, type,
                     ref MemoryMarshal.GetReference(pixels.Span));
             }
         }
 
-        private Image<Rgba32> createBackingImage(int width, int height)
+        private Image<TPixel> createBackingImage<TPixel>(int width, int height)
+            where TPixel : unmanaged, IPixel<TPixel>
         {
             // it is faster to initialise without a background specification if transparent black is all that's required.
             return initialisationColour == default
-                ? new Image<Rgba32>(width, height)
-                : new Image<Rgba32>(width, height, initialisationColour);
+                ? new Image<TPixel>(width, height)
+                : new Image<TPixel>(width, height, initialisationColour.ToPixel<TPixel>());
         }
     }
 }

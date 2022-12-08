@@ -15,7 +15,7 @@ using osu.Framework.Graphics.Textures;
 using osu.Framework.Statistics;
 using osuTK;
 using osuTK.Graphics.ES30;
-using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp;
 
 namespace osu.Framework.Graphics.OpenGL
 {
@@ -285,77 +285,14 @@ namespace osu.Framework.Graphics.OpenGL
 
         protected override IShader CreateShader(string name, params IShaderPart[] parts) => new GLShader(this, name, parts.Cast<GLShaderPart>().ToArray());
 
-        public override IFrameBuffer CreateFrameBuffer(RenderBufferFormat[]? renderBufferFormats = null, TextureFilteringMode filteringMode = TextureFilteringMode.Linear)
+        public override IFrameBuffer CreateFrameBuffer(RenderBufferFormat[]? renderBufferFormats = null, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, TextureFormat textureFormat = TextureFormat.SRGBA8)
         {
-            All glFilteringMode;
-            RenderbufferInternalFormat[]? glFormats = null;
-
-            switch (filteringMode)
-            {
-                case TextureFilteringMode.Linear:
-                    glFilteringMode = All.Linear;
-                    break;
-
-                case TextureFilteringMode.Nearest:
-                    glFilteringMode = All.Nearest;
-                    break;
-
-                default:
-                    throw new ArgumentException($"Unsupported filtering mode: {filteringMode}", nameof(filteringMode));
-            }
-
-            if (renderBufferFormats != null)
-            {
-                glFormats = new RenderbufferInternalFormat[renderBufferFormats.Length];
-
-                for (int i = 0; i < renderBufferFormats.Length; i++)
-                {
-                    switch (renderBufferFormats[i])
-                    {
-                        case RenderBufferFormat.D16:
-                            glFormats[i] = RenderbufferInternalFormat.DepthComponent16;
-                            break;
-
-                        case RenderBufferFormat.D32:
-                            glFormats[i] = RenderbufferInternalFormat.DepthComponent32f;
-                            break;
-
-                        case RenderBufferFormat.D24S8:
-                            glFormats[i] = RenderbufferInternalFormat.Depth24Stencil8;
-                            break;
-
-                        case RenderBufferFormat.D32S8:
-                            glFormats[i] = RenderbufferInternalFormat.Depth32fStencil8;
-                            break;
-
-                        default:
-                            throw new ArgumentException($"Unsupported render buffer format: {renderBufferFormats[i]}", nameof(renderBufferFormats));
-                    }
-                }
-            }
-
-            return new GLFrameBuffer(this, glFormats, glFilteringMode);
+            return new GLFrameBuffer(this, renderBufferFormats, filteringMode, textureFormat);
         }
 
-        protected override INativeTexture CreateNativeTexture(int width, int height, bool manualMipmaps = false, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, Rgba32 initialisationColour = default)
+        protected override INativeTexture CreateNativeTexture(int width, int height, bool manualMipmaps = false, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, Color initialisationColour = default, TextureFormat textureFormat = TextureFormat.SRGB8)
         {
-            All glFilteringMode;
-
-            switch (filteringMode)
-            {
-                case TextureFilteringMode.Linear:
-                    glFilteringMode = All.Linear;
-                    break;
-
-                case TextureFilteringMode.Nearest:
-                    glFilteringMode = All.Nearest;
-                    break;
-
-                default:
-                    throw new ArgumentException($"Unsupported filtering mode: {filteringMode}", nameof(filteringMode));
-            }
-
-            return new GLTexture(this, width, height, manualMipmaps, glFilteringMode, initialisationColour);
+            return new GLTexture(this, width, height, manualMipmaps, filteringMode, initialisationColour, textureFormat);
         }
 
         protected override INativeTexture CreateNativeVideoTexture(int width, int height) => new GLVideoTexture(this, width, height);

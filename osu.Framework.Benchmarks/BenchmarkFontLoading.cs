@@ -96,7 +96,7 @@ namespace osu.Framework.Benchmarks
 
                     var icon = (IconUsage)propValue;
                     using (var upload = store.Get(icon.Icon.ToString()))
-                        Trace.Assert(upload.Data != null);
+                        Trace.Assert(upload.ByteData != null);
 
                     if (remainingCount-- == 0)
                         return;
