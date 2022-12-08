@@ -38,6 +38,8 @@ namespace osu.Framework.Graphics.OpenGL.Textures
 
         public int MaxSize => Renderer.MaxTextureSize;
 
+        public TextureFormat InternalFormat { get; }
+
         public virtual int Width { get; set; }
         public virtual int Height { get; set; }
         public virtual int GetByteSize() => Width * Height * 4;
@@ -51,8 +53,8 @@ namespace osu.Framework.Graphics.OpenGL.Textures
         private int internalHeight;
         private bool manualMipmaps;
 
-        private readonly All filteringMode;
-        private readonly TextureComponentCount internalFormat;
+        private readonly All glFilteringMode;
+        private readonly TextureComponentCount glInternalFormat;
         private readonly Color initialisationColour;
 
         /// <summary>
@@ -71,9 +73,10 @@ namespace osu.Framework.Graphics.OpenGL.Textures
             Width = width;
             Height = height;
             this.manualMipmaps = manualMipmaps;
-            this.filteringMode = filteringMode.ToGLFilteringMode();
+            glFilteringMode = filteringMode.ToGLFilteringMode();
             this.initialisationColour = initialisationColour;
-            this.internalFormat = internalFormat.ToGLTextureComponentCount();
+            glInternalFormat = internalFormat.ToGLTextureComponentCount();
+            InternalFormat = internalFormat;
         }
 
         #region Disposal
@@ -171,11 +174,11 @@ namespace osu.Framework.Graphics.OpenGL.Textures
 
         public void SetData(ITextureUpload upload)
         {
-            if (!internalFormat.SupportsPixelFormat(upload.Format))
-                throw new ArgumentException($"Texture with internal format {internalFormat} does not support upload with pixel format {upload.Format}.");
+            if (!glInternalFormat.SupportsPixelFormat(upload.Format))
+                throw new ArgumentException($"Texture with internal format {glInternalFormat} does not support upload with pixel format {upload.Format}.");
 
-            if (!internalFormat.SupportsPixelType(upload.Type))
-                throw new ArgumentException($"Texture with internal format {internalFormat} does not support upload with pixel type {upload.Type}.");
+            if (!glInternalFormat.SupportsPixelType(upload.Type))
+                throw new ArgumentException($"Texture with internal format {glInternalFormat} does not support upload with pixel type {upload.Type}.");
 
             lock (uploadQueue)
             {
@@ -248,8 +251,8 @@ namespace osu.Framework.Graphics.OpenGL.Textures
 
         protected virtual void DoUpload(ITextureUpload upload, IntPtr dataPointer)
         {
-            Debug.Assert(internalFormat.SupportsPixelFormat(upload.Format));
-            Debug.Assert(internalFormat.SupportsPixelType(upload.Type));
+            Debug.Assert(glInternalFormat.SupportsPixelFormat(upload.Format));
+            Debug.Assert(glInternalFormat.SupportsPixelType(upload.Type));
 
             // Do we need to create a new texture?
             if (textureId <= 0 || internalWidth != Width || internalHeight != Height)
@@ -275,8 +278,8 @@ namespace osu.Framework.Graphics.OpenGL.Textures
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLod, IRenderer.MAX_MIPMAP_LEVELS);
 
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter,
-                        (int)(manualMipmaps ? filteringMode : filteringMode == All.Linear ? All.LinearMipmapLinear : All.Nearest));
-                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)filteringMode);
+                        (int)(manualMipmaps ? glFilteringMode : glFilteringMode == All.Linear ? All.LinearMipmapLinear : All.Nearest));
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)glFilteringMode);
 
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
@@ -287,7 +290,7 @@ namespace osu.Framework.Graphics.OpenGL.Textures
                 if ((Width == upload.Bounds.Width && Height == upload.Bounds.Height) || dataPointer == IntPtr.Zero)
                 {
                     updateMemoryUsage(upload.Level, (long)Width * Height * upload.BytesPerPixel);
-                    GL.TexImage2D(TextureTarget2d.Texture2D, upload.Level, internalFormat, Width, Height, 0, upload.Format, upload.Type, dataPointer);
+                    GL.TexImage2D(TextureTarget2d.Texture2D, upload.Level, glInternalFormat, Width, Height, 0, upload.Format, upload.Type, dataPointer);
                 }
                 else
                 {
@@ -327,7 +330,7 @@ namespace osu.Framework.Graphics.OpenGL.Textures
 
         private void initialiseLevel(int level, int width, int height)
         {
-            switch (internalFormat)
+            switch (glInternalFormat)
             {
                 case TextureComponentCount.Luminance:
                     initialiseLevelImpl<L8>(level, width, height, PixelFormat.Luminance, PixelType.UnsignedByte);
@@ -356,8 +359,7 @@ namespace osu.Framework.Graphics.OpenGL.Textures
                     break;
 
                 default:
-                    Debug.Fail($"Invalid internal format {internalFormat}");
-                    break;
+                    throw new InvalidOperationException($"Invalid {nameof(glInternalFormat)} {glInternalFormat}");
             }
         }
 
@@ -367,8 +369,8 @@ namespace osu.Framework.Graphics.OpenGL.Textures
             using (var image = createBackingImage<TPixel>(width, height))
             using (var pixels = image.CreateReadOnlyPixelSpan())
             {
-                updateMemoryUsage(level, (long)width * height * internalFormat.GetBytesPerPixel());
-                GL.TexImage2D(TextureTarget2d.Texture2D, level, internalFormat, width, height, 0, format, type,
+                updateMemoryUsage(level, (long)width * height * glInternalFormat.GetBytesPerPixel());
+                GL.TexImage2D(TextureTarget2d.Texture2D, level, glInternalFormat, width, height, 0, format, type,
                     ref MemoryMarshal.GetReference(pixels.Span));
             }
         }

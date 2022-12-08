@@ -35,6 +35,11 @@ namespace osu.Framework.Graphics.Rendering
         int Height { get; set; }
 
         /// <summary>
+        /// The internal format of the texture. Upload format should be the same or similar.
+        /// </summary>
+        TextureFormat InternalFormat { get; }
+
+        /// <summary>
         /// Whether the texture is in a usable state.
         /// </summary>
         bool Available { get; }

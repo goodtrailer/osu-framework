@@ -9,6 +9,7 @@ using osu.Framework.Graphics.Rendering;
 using osu.Framework.Graphics.Textures;
 using osuTK;
 using osuTK.Graphics.ES30;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace osu.Framework.Graphics.OpenGL.Buffers
 {
@@ -62,7 +63,7 @@ namespace osu.Framework.Graphics.OpenGL.Buffers
 
                 glTexture.Width = (int)Math.Ceiling(size.X);
                 glTexture.Height = (int)Math.Ceiling(size.Y);
-                glTexture.SetData(new TextureUpload());
+                glTexture.SetData(createEmptyTextureUpload(glTexture.InternalFormat));
                 glTexture.Upload();
             }
         }
@@ -91,6 +92,45 @@ namespace osu.Framework.Graphics.OpenGL.Buffers
                 buffer.Unbind();
 
             renderer.UnbindFrameBuffer(this);
+        }
+
+        private static ITextureUpload createEmptyTextureUpload(TextureFormat format)
+        {
+            ITextureUpload upload;
+
+            switch (format)
+            {
+                case TextureFormat.L8:
+                    upload = new TextureUpload<L8>();
+                    break;
+
+                case TextureFormat.A8:
+                    upload = new TextureUpload<A8>();
+                    break;
+
+                case TextureFormat.RGB8:
+                case TextureFormat.SRGB8:
+                case TextureFormat.RGB565:
+                    upload = new TextureUpload<Rgb24>();
+                    break;
+
+                case TextureFormat.RGBA8:
+                case TextureFormat.SRGBA8:
+                case TextureFormat.RGB5A1:
+                case TextureFormat.RGBA4:
+                    upload = new TextureUpload<Rgba32>();
+                    break;
+
+                case TextureFormat.RGBA16F:
+                case TextureFormat.RGBA32F:
+                    upload = new TextureUpload<RgbaVector>();
+                    break;
+
+                default:
+                    throw new ArgumentException($"Invalid {nameof(TextureFormat)} {format}", nameof(format));
+            }
+
+            return upload;
         }
 
         #region Disposal
@@ -126,12 +166,12 @@ namespace osu.Framework.Graphics.OpenGL.Buffers
 
         private class FrameBufferTexture : GLTexture
         {
-            public FrameBufferTexture(GLRenderer renderer, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, TextureFormat textureFormat = TextureFormat.SRGBA8)
-                : base(renderer, 1, 1, true, filteringMode, internalFormat: textureFormat)
+            public FrameBufferTexture(GLRenderer renderer, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, TextureFormat internalFormat = TextureFormat.SRGBA8)
+                : base(renderer, 1, 1, true, filteringMode, internalFormat: internalFormat)
             {
                 BypassTextureUploadQueueing = true;
 
-                SetData(new TextureUpload());
+                SetData(createEmptyTextureUpload(internalFormat));
                 Upload();
             }
 
