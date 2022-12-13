@@ -24,6 +24,10 @@ namespace osu.Framework.Extensions.ImageExtensions
             where TPixel : unmanaged, IPixel<TPixel>
             => new ReadOnlyPixelSpan<TPixel>(image);
 
+        public static ReadOnlyByteSpan CreateReadOnlyByteSpan<TPixel>(this Image<TPixel> image)
+            where TPixel : unmanaged, IPixel<TPixel>
+            => ReadOnlyByteSpan.FromImage(image);
+
         /// <summary>
         /// Creates a contiguous and read-only memory from the pixels of an <see cref="Image{TPixel}"/>.
         /// Useful for retrieving unmanaged pointers to the entire pixel data of the <see cref="Image{TPixel}"/> for marshalling.

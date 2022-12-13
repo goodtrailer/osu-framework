@@ -3,6 +3,7 @@
 
 using System;
 using System.Runtime.InteropServices;
+using osu.Framework.Graphics.OpenGL.Textures;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Utils;
 using osuTK.Graphics.ES30;
@@ -27,15 +28,28 @@ namespace osu.Framework.Graphics.Textures
 
         public ReadOnlySpan<byte> ByteData => MemoryMarshal.Cast<TPixel, byte>(Data);
 
-        public PixelFormat Format => format;
+        public PixelFormat Format { get; private set; }
 
-        public PixelType Type => type;
+        public virtual PixelType Type => Pixel<TPixel>.TYPE;
 
-        public int BytesPerPixel => bytes_per_pixel;
+        public virtual int BytesPerPixel => Pixel<TPixel>.BYTES_PER_PIXEL;
 
-        private static readonly PixelFormat format = Pixel.GetFormat<TPixel>();
-        private static readonly PixelType type = Pixel.GetType<TPixel>();
-        private static readonly int bytes_per_pixel = Pixel.GetBytesPerPixel<TPixel>();
+        private bool toIntegerFormat;
+
+        public bool ToIntegerFormat
+        {
+            get => toIntegerFormat;
+            set
+            {
+                if (toIntegerFormat == value)
+                    return;
+
+                toIntegerFormat = value;
+                Format = value
+                    ? Pixel<TPixel>.FORMAT.ToIntegerFormat()
+                    : Pixel<TPixel>.FORMAT;
+            }
+        }
 
         public abstract void Dispose();
     }

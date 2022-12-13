@@ -11,28 +11,28 @@ namespace osu.Framework.Utils
     /// Utility class for getting useful layout/format info for the several <see cref="IPixel"/>
     /// implementations.
     /// </summary>
-    public static class Pixel
+    public static class Pixel<TPixel>
+        where TPixel : unmanaged, IPixel<TPixel>
     {
-        public static PixelFormat GetFormat<TPixel>()
-            where TPixel : unmanaged, IPixel<TPixel>
+        public static readonly PixelFormat FORMAT = getFormat();
+        public static readonly PixelType TYPE = getType();
+        public static readonly int BYTES_PER_PIXEL = getBytesPerPixel();
+
+        private static PixelFormat getFormat()
         {
             switch (typeof(TPixel))
             {
                 case Type rgba32Type when rgba32Type == typeof(Rgba32):
                 case Type rgbaVecType when rgbaVecType == typeof(RgbaVector):
+                case Type rgba64Type when rgba64Type == typeof(Rgba64):
                     return PixelFormat.Rgba;
 
-                case Type rgba64Type when rgba64Type == typeof(Rgba64):
-                    return PixelFormat.RgbaInteger;
-
                 case Type rgb24Type when rgb24Type == typeof(Rgb24):
+                case Type rgb48Type when rgb48Type == typeof(Rgb48):
                     return PixelFormat.Rgb;
 
-                case Type rgb48Type when rgb48Type == typeof(Rgb48):
-                    return PixelFormat.RgbInteger;
-
                 case Type rg32Type when rg32Type == typeof(Rg32):
-                    return PixelFormat.RgInteger;
+                    return PixelFormat.Rg;
 
                 case Type a8Type when a8Type == typeof(A8):
                     return PixelFormat.Alpha;
@@ -45,8 +45,7 @@ namespace osu.Framework.Utils
             }
         }
 
-        public static PixelType GetType<TPixel>()
-            where TPixel : unmanaged, IPixel<TPixel>
+        private static PixelType getType()
         {
             switch (typeof(TPixel))
             {
@@ -69,8 +68,7 @@ namespace osu.Framework.Utils
             }
         }
 
-        public static int GetBytesPerPixel<TPixel>()
-            where TPixel : unmanaged, IPixel<TPixel>
+        private static int getBytesPerPixel()
         {
             switch (typeof(TPixel))
             {

@@ -43,6 +43,8 @@ namespace osu.Framework.Graphics.Rendering.Dummy
 
         public ulong BindCount => 0;
 
+        public TextureFormat InternalFormat => default;
+
         public void Dispose()
         {
         }

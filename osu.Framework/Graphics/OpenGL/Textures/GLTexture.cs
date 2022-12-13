@@ -330,58 +330,12 @@ namespace osu.Framework.Graphics.OpenGL.Textures
 
         private void initialiseLevel(int level, int width, int height)
         {
-            switch (glInternalFormat)
-            {
-                case TextureComponentCount.Luminance:
-                    initialiseLevelImpl<L8>(level, width, height, PixelFormat.Luminance, PixelType.UnsignedByte);
-                    break;
-
-                case TextureComponentCount.Alpha:
-                    initialiseLevelImpl<A8>(level, width, height, PixelFormat.Alpha, PixelType.UnsignedByte);
-                    break;
-
-                case TextureComponentCount.Rgb8:
-                case TextureComponentCount.Srgb8:
-                case TextureComponentCount.Rgb565:
-                    initialiseLevelImpl<Rgb24>(level, width, height, PixelFormat.Rgb, PixelType.UnsignedByte);
-                    break;
-
-                case TextureComponentCount.Rgba8:
-                case TextureComponentCount.Srgb8Alpha8:
-                case TextureComponentCount.Rgb5A1:
-                case TextureComponentCount.Rgba4:
-                    initialiseLevelImpl<Rgba32>(level, width, height, PixelFormat.Rgba, PixelType.UnsignedByte);
-                    break;
-
-                case TextureComponentCount.Rgba16f:
-                case TextureComponentCount.Rgba32f:
-                    initialiseLevelImpl<RgbaVector>(level, width, height, PixelFormat.Rgba, PixelType.Float);
-                    break;
-
-                default:
-                    throw new InvalidOperationException($"Invalid {nameof(glInternalFormat)} {glInternalFormat}");
-            }
-        }
-
-        private void initialiseLevelImpl<TPixel>(int level, int width, int height, PixelFormat format, PixelType type)
-            where TPixel : unmanaged, IPixel<TPixel>
-        {
-            using (var image = createBackingImage<TPixel>(width, height))
-            using (var pixels = image.CreateReadOnlyPixelSpan())
+            using (var pixels = InternalFormat.CreateImageByteSpan(width, height, initialisationColour))
             {
                 updateMemoryUsage(level, (long)width * height * glInternalFormat.GetBytesPerPixel());
-                GL.TexImage2D(TextureTarget2d.Texture2D, level, glInternalFormat, width, height, 0, format, type,
+                GL.TexImage2D(TextureTarget2d.Texture2D, level, glInternalFormat, width, height, 0, pixels.Format, pixels.Type,
                     ref MemoryMarshal.GetReference(pixels.Span));
             }
-        }
-
-        private Image<TPixel> createBackingImage<TPixel>(int width, int height)
-            where TPixel : unmanaged, IPixel<TPixel>
-        {
-            // it is faster to initialise without a background specification if transparent black is all that's required.
-            return initialisationColour == default
-                ? new Image<TPixel>(width, height)
-                : new Image<TPixel>(width, height, initialisationColour.ToPixel<TPixel>());
         }
     }
 }

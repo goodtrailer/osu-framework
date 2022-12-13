@@ -63,7 +63,7 @@ namespace osu.Framework.Graphics.OpenGL.Buffers
 
                 glTexture.Width = (int)Math.Ceiling(size.X);
                 glTexture.Height = (int)Math.Ceiling(size.Y);
-                glTexture.SetData(createEmptyTextureUpload(glTexture.InternalFormat));
+                glTexture.SetData(glTexture.InternalFormat.CreateEmptyTextureUpload());
                 glTexture.Upload();
             }
         }
@@ -92,45 +92,6 @@ namespace osu.Framework.Graphics.OpenGL.Buffers
                 buffer.Unbind();
 
             renderer.UnbindFrameBuffer(this);
-        }
-
-        private static ITextureUpload createEmptyTextureUpload(TextureFormat format)
-        {
-            ITextureUpload upload;
-
-            switch (format)
-            {
-                case TextureFormat.L8:
-                    upload = new TextureUpload<L8>();
-                    break;
-
-                case TextureFormat.A8:
-                    upload = new TextureUpload<A8>();
-                    break;
-
-                case TextureFormat.RGB8:
-                case TextureFormat.SRGB8:
-                case TextureFormat.RGB565:
-                    upload = new TextureUpload<Rgb24>();
-                    break;
-
-                case TextureFormat.RGBA8:
-                case TextureFormat.SRGBA8:
-                case TextureFormat.RGB5A1:
-                case TextureFormat.RGBA4:
-                    upload = new TextureUpload<Rgba32>();
-                    break;
-
-                case TextureFormat.RGBA16F:
-                case TextureFormat.RGBA32F:
-                    upload = new TextureUpload<RgbaVector>();
-                    break;
-
-                default:
-                    throw new ArgumentException($"Invalid {nameof(TextureFormat)} {format}", nameof(format));
-            }
-
-            return upload;
         }
 
         #region Disposal
@@ -171,7 +132,7 @@ namespace osu.Framework.Graphics.OpenGL.Buffers
             {
                 BypassTextureUploadQueueing = true;
 
-                SetData(createEmptyTextureUpload(internalFormat));
+                SetData(internalFormat.CreateEmptyTextureUpload());
                 Upload();
             }
 
