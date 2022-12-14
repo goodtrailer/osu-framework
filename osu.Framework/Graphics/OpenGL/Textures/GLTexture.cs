@@ -67,7 +67,7 @@ namespace osu.Framework.Graphics.OpenGL.Textures
         /// <param name="filteringMode">The filtering mode.</param>
         /// <param name="initialisationColour">The colour to initialise texture levels with (in the case of sub region initial uploads).</param>
         /// <param name="internalFormat">The internal format of the texture (which upload formats should be the same as, or at least similar to.</param>
-        public GLTexture(GLRenderer renderer, int width, int height, bool manualMipmaps = false, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, Color initialisationColour = default, TextureFormat internalFormat = TextureFormat.SRGBA8)
+        public GLTexture(GLRenderer renderer, int width, int height, bool manualMipmaps = false, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, Color initialisationColour = default, TextureFormat internalFormat = default)
         {
             Renderer = renderer;
             Width = width;

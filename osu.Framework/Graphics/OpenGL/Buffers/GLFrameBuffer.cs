@@ -23,7 +23,7 @@ namespace osu.Framework.Graphics.OpenGL.Buffers
 
         public readonly int FrameBuffer;
 
-        public GLFrameBuffer(GLRenderer renderer, RenderBufferFormat[]? renderBufferFormats = null, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, TextureFormat textureFormat = TextureFormat.SRGBA8)
+        public GLFrameBuffer(GLRenderer renderer, RenderBufferFormat[]? renderBufferFormats = null, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, TextureFormat textureFormat = default)
         {
             this.renderer = renderer;
             FrameBuffer = GL.GenFramebuffer();
@@ -127,7 +127,7 @@ namespace osu.Framework.Graphics.OpenGL.Buffers
 
         private class FrameBufferTexture : GLTexture
         {
-            public FrameBufferTexture(GLRenderer renderer, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, TextureFormat internalFormat = TextureFormat.SRGBA8)
+            public FrameBufferTexture(GLRenderer renderer, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, TextureFormat internalFormat = default)
                 : base(renderer, 1, 1, true, filteringMode, internalFormat: internalFormat)
             {
                 BypassTextureUploadQueueing = true;

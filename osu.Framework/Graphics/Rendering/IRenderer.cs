@@ -294,13 +294,13 @@ namespace osu.Framework.Graphics.Rendering
         /// <param name="filteringMode">The texture filtering mode.</param>
         /// <param name="textureFormat">The texture format of the frame buffer's texture attachment.</param>
         /// <returns>The <see cref="IFrameBuffer"/>.</returns>
-        IFrameBuffer CreateFrameBuffer(RenderBufferFormat[]? renderBufferFormats = null, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, TextureFormat textureFormat = TextureFormat.SRGBA8);
+        IFrameBuffer CreateFrameBuffer(RenderBufferFormat[]? renderBufferFormats = null, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, TextureFormat textureFormat = default);
 
         /// <summary>
         /// Creates a new texture.
         /// </summary>
         Texture CreateTexture(int width, int height, bool manualMipmaps = false, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, WrapMode wrapModeS = WrapMode.None,
-                              WrapMode wrapModeT = WrapMode.None, Color initialisationColour = default, TextureFormat textureFormat = TextureFormat.SRGBA8);
+                              WrapMode wrapModeT = WrapMode.None, Color initialisationColour = default, TextureFormat textureFormat = default);
 
         /// <summary>
         /// Creates a new video texture.

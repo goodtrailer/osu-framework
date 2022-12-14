@@ -5,7 +5,6 @@ using System;
 using osu.Framework.Extensions.ImageExtensions;
 using osuTK.Graphics.ES30;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.ColorSpaces;
 using SixLabors.ImageSharp.PixelFormats;
 
 namespace osu.Framework.Graphics.Textures

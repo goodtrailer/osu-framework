@@ -149,11 +149,11 @@ namespace osu.Framework.Graphics.Rendering.Dummy
         IShader IRenderer.CreateShader(string name, params IShaderPart[] parts)
             => new DummyShader(this);
 
-        public IFrameBuffer CreateFrameBuffer(RenderBufferFormat[]? renderBufferFormats = null, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, TextureFormat textureFormat = TextureFormat.SRGBA8)
+        public IFrameBuffer CreateFrameBuffer(RenderBufferFormat[]? renderBufferFormats = null, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, TextureFormat textureFormat = default)
             => new DummyFrameBuffer(this);
 
         public Texture CreateTexture(int width, int height, bool manualMipmaps = false, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, WrapMode wrapModeS = WrapMode.None,
-                                     WrapMode wrapModeT = WrapMode.None, Color initialisationColour = default, TextureFormat textureFormat = TextureFormat.SRGBA8)
+                                     WrapMode wrapModeT = WrapMode.None, Color initialisationColour = default, TextureFormat textureFormat = default)
             => new Texture(new DummyNativeTexture(this) { Width = width, Height = height }, wrapModeS, wrapModeT);
 
         public Texture CreateVideoTexture(int width, int height)

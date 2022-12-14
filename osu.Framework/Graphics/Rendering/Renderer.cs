@@ -957,7 +957,7 @@ namespace osu.Framework.Graphics.Rendering
 
         #region Factory
 
-        public abstract IFrameBuffer CreateFrameBuffer(RenderBufferFormat[]? renderBufferFormats = null, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, TextureFormat textureFormat = TextureFormat.SRGBA8);
+        public abstract IFrameBuffer CreateFrameBuffer(RenderBufferFormat[]? renderBufferFormats = null, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, TextureFormat textureFormat = default);
 
         /// <inheritdoc cref="IRenderer.CreateShaderPart"/>
         protected abstract IShaderPart CreateShaderPart(ShaderManager manager, string name, byte[]? rawData, ShaderPartType partType);
@@ -982,7 +982,7 @@ namespace osu.Framework.Graphics.Rendering
         /// <param name="textureFormat">The texture format.</param>
         /// <returns>The <see cref="INativeTexture"/>.</returns>
         protected abstract INativeTexture CreateNativeTexture(int width, int height, bool manualMipmaps = false, TextureFilteringMode filteringMode = TextureFilteringMode.Linear,
-                                                              Color initialisationColour = default, TextureFormat textureFormat = TextureFormat.SRGBA8);
+                                                              Color initialisationColour = default, TextureFormat textureFormat = default);
 
         /// <summary>
         /// Creates a new <see cref="INativeTexture"/> for video sprites.
@@ -993,7 +993,7 @@ namespace osu.Framework.Graphics.Rendering
         protected abstract INativeTexture CreateNativeVideoTexture(int width, int height);
 
         public Texture CreateTexture(int width, int height, bool manualMipmaps = false, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, WrapMode wrapModeS = WrapMode.None,
-                                     WrapMode wrapModeT = WrapMode.None, Color initialisationColour = default, TextureFormat textureFormat = TextureFormat.SRGBA8)
+                                     WrapMode wrapModeT = WrapMode.None, Color initialisationColour = default, TextureFormat textureFormat = default)
             => CreateTexture(CreateNativeTexture(width, height, manualMipmaps, filteringMode, initialisationColour, textureFormat), wrapModeS, wrapModeT);
 
         public Texture CreateVideoTexture(int width, int height) => CreateTexture(CreateNativeVideoTexture(width, height));
