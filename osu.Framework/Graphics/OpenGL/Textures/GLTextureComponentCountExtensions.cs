@@ -179,7 +179,7 @@ namespace osu.Framework.Graphics.OpenGL.Textures
                     return false;
 
                 default:
-                    throw new InvalidOperationException($"{pixelFormat} is not a valid {nameof(PixelFormat)} type.");
+                    throw new ArgumentException($"{pixelFormat} is not a valid {nameof(PixelFormat)}", nameof(pixelFormat));
             }
         }
 
@@ -393,7 +393,7 @@ namespace osu.Framework.Graphics.OpenGL.Textures
                     return false;
 
                 default:
-                    throw new InvalidOperationException($"{pixelType} is not a valid {nameof(PixelType)} type.");
+                    throw new ArgumentException($"{pixelType} is not a valid {nameof(PixelType)}", nameof(pixelType));
             }
         }
 
@@ -497,7 +497,7 @@ namespace osu.Framework.Graphics.OpenGL.Textures
                     return 16;
 
                 default:
-                    throw new InvalidOperationException($"{format} is not a valid {nameof(TextureComponentCount)} type.");
+                    throw new ArgumentException($"{format} is not a valid {nameof(TextureComponentCount)} type.", nameof(format));
             }
         }
     }

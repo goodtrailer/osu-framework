@@ -28,7 +28,7 @@ namespace osu.Framework.Graphics.Textures
 
         public ReadOnlySpan<byte> ByteData => MemoryMarshal.Cast<TPixel, byte>(Data);
 
-        public PixelFormat Format { get; private set; }
+        public PixelFormat Format { get; private set; } = Pixel<TPixel>.FORMAT;
 
         public virtual PixelType Type => Pixel<TPixel>.TYPE;
 
