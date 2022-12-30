@@ -4,6 +4,7 @@
 #nullable disable
 
 using System;
+using System.Text.RegularExpressions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Effects;
@@ -17,9 +18,22 @@ namespace osu.Framework.Tests.Visual.Containers
 {
     public partial class TestSceneMasking : FrameworkTestScene
     {
+        protected MaskingTest CurrentTest;
         protected Container TestContainer;
-        protected int CurrentTest;
         protected float TestCornerExponent = 2f;
+
+        protected enum MaskingTest
+        {
+            RoundCornerMasking,
+            RoundCornerAabb1,
+            RoundCornerAabb2,
+            RoundCornerAabb3,
+            EdgeAndBorderBlur,
+            NestedMasking,
+            RoundedCornerInput,
+            OffsetShadow,
+            NegativeSize,
+        }
 
         public TestSceneMasking()
         {
@@ -28,32 +42,16 @@ namespace osu.Framework.Tests.Visual.Containers
                 RelativeSizeAxes = Axes.Both,
             });
 
-            string[] testNames =
-            {
-                @"Round corner masking",
-                @"Round corner AABB 1",
-                @"Round corner AABB 2",
-                @"Round corner AABB 3",
-                @"Edge/border blurriness",
-                @"Nested masking",
-                @"Rounded corner input",
-                @"Offset shadow",
-                @"Negative size"
-            };
-
-            for (int i = 0; i < testNames.Length; i++)
-            {
-                int test = i;
-                AddStep(testNames[i], delegate { loadTest(test); });
-            }
+            foreach (MaskingTest test in Enum.GetValues(typeof(MaskingTest)))
+                AddStep(Regex.Replace(test.ToString(), "([a-z])([A-Z0-9])", "$1 $2"), () => LoadTest(test));
 
             AddSliderStep("Corner exponent", 0.01f, 10, 2, exponent =>
             {
                 TestCornerExponent = exponent;
-                loadTest(CurrentTest);
+                LoadTest(CurrentTest);
             });
 
-            loadTest(0);
+            LoadTest(default);
             addCrosshair();
         }
 
@@ -92,17 +90,22 @@ namespace osu.Framework.Tests.Visual.Containers
             });
         }
 
-        private void loadTest(int testType)
+        protected virtual void LoadTest(MaskingTest test)
         {
-            TestContainer.Clear();
-            CurrentTest = testType;
+            CurrentTest = test;
+            ApplyTest(TestContainer);
+        }
 
-            switch (testType)
+        protected void ApplyTest(Container container)
+        {
+            container.Clear();
+
+            switch (CurrentTest)
             {
-                default:
+                case MaskingTest.RoundCornerMasking:
                 {
                     Container box;
-                    TestContainer.Add(box = new InfofulBoxAutoSize
+                    container.Add(box = new InfofulBoxAutoSize
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
@@ -132,10 +135,10 @@ namespace osu.Framework.Tests.Visual.Containers
                     break;
                 }
 
-                case 1:
+                case MaskingTest.RoundCornerAabb1:
                 {
                     Container box;
-                    TestContainer.Add(new InfofulBoxAutoSize
+                    container.Add(new InfofulBoxAutoSize
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
@@ -163,10 +166,10 @@ namespace osu.Framework.Tests.Visual.Containers
                     break;
                 }
 
-                case 2:
+                case MaskingTest.RoundCornerAabb2:
                 {
                     Container box;
-                    TestContainer.Add(new InfofulBoxAutoSize
+                    container.Add(new InfofulBoxAutoSize
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
@@ -192,15 +195,14 @@ namespace osu.Framework.Tests.Visual.Containers
                     break;
                 }
 
-                case 3:
-                {
+                case MaskingTest.RoundCornerAabb3:
                     Color4 glowColour = Color4.Aquamarine;
                     glowColour.A = 0.5f;
 
                     Container box1;
                     Container box2;
 
-                    TestContainer.Add(new InfofulBoxAutoSize
+                    container.Add(new InfofulBoxAutoSize
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
@@ -247,10 +249,8 @@ namespace osu.Framework.Tests.Visual.Containers
                     box1.OnUpdate += delegate { box1.Rotation += 0.07f; };
                     box2.OnUpdate += delegate { box2.Rotation -= 0.15f; };
                     break;
-                }
 
-                case 4:
-                {
+                case MaskingTest.EdgeAndBorderBlur:
                     static Drawable createMaskingBox(float scale, float testCornerExponent)
                     {
                         float size = 200 / scale;
@@ -286,7 +286,7 @@ namespace osu.Framework.Tests.Visual.Containers
                         };
                     }
 
-                    TestContainer.Add(new FillFlowContainer
+                    container.Add(new FillFlowContainer
                     {
                         RelativeSizeAxes = Axes.Both,
                         Children = new[]
@@ -323,11 +323,9 @@ namespace osu.Framework.Tests.Visual.Containers
                     });
 
                     break;
-                }
 
-                case 5:
-                {
-                    TestContainer.Add(new Container
+                case MaskingTest.NestedMasking:
+                    container.Add(new Container
                     {
                         Masking = true,
                         Size = new Vector2(0.5f),
@@ -357,11 +355,9 @@ namespace osu.Framework.Tests.Visual.Containers
                         }
                     });
                     break;
-                }
 
-                case 6:
-                {
-                    TestContainer.Add(new FillFlowContainer
+                case MaskingTest.RoundedCornerInput:
+                    container.Add(new FillFlowContainer
                     {
                         Direction = FillDirection.Vertical,
                         AutoSizeAxes = Axes.Both,
@@ -452,12 +448,11 @@ namespace osu.Framework.Tests.Visual.Containers
                         }
                     });
                     break;
-                }
 
-                case 7:
+                case MaskingTest.OffsetShadow:
                 {
                     Container box;
-                    TestContainer.Add(box = new InfofulBoxAutoSize
+                    container.Add(box = new InfofulBoxAutoSize
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
@@ -488,8 +483,8 @@ namespace osu.Framework.Tests.Visual.Containers
                     break;
                 }
 
-                case 8:
-                    TestContainer.Add(new Container
+                case MaskingTest.NegativeSize:
+                    container.Add(new Container
                     {
                         Size = new Vector2(200, 200),
                         Anchor = Anchor.Centre,
@@ -526,11 +521,6 @@ namespace osu.Framework.Tests.Visual.Containers
                     }));
                     break;
             }
-
-#if DEBUG
-            //if (toggleDebugAutosize.State)
-            //    testContainer.Children.FindAll(c => c.HasAutosizeChildren).ForEach(c => c.AutoSizeDebug = true);
-#endif
         }
 
         private partial class CircularContainerWithInput : CircularContainer

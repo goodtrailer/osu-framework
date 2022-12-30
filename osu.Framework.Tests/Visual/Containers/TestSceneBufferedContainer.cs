@@ -3,6 +3,7 @@
 
 #nullable disable
 
+using System.Collections.Generic;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osuTK;
@@ -11,31 +12,99 @@ namespace osu.Framework.Tests.Visual.Containers
 {
     public partial class TestSceneBufferedContainer : TestSceneMasking
     {
+        private List<BufferedContainer> bufferedContainers = new List<BufferedContainer>();
+        private List<Container> containers = new List<Container>();
+
+        private float blur;
+        private Vector2 fboScale;
+
         public TestSceneBufferedContainer()
         {
             Remove(TestContainer, false);
 
-            BufferedContainer buffer;
-            Add(buffer = new BufferedContainer
+            containers.Add(TestContainer);
+
+            var buffer = new BufferedContainer
             {
                 RelativeSizeAxes = Axes.Both,
-                Children = new[] { TestContainer }
+                Child = TestContainer,
+            };
+
+            bufferedContainers.Add(buffer);
+            Add(buffer);
+
+            AddSliderStep("blur", 0f, 20f, 0f, b =>
+            {
+                blur = b;
+                updateBlur();
             });
 
-            AddSliderStep("blur", 0f, 20f, 0f, blur =>
+            AddSliderStep("fbo scale (x)", 0.01f, 4f, 1f, s =>
             {
-                buffer.BlurTo(new Vector2(blur));
+                fboScale.X = s;
+                updateFboScale();
             });
 
-            AddSliderStep("fbo scale (x)", 0.01f, 4f, 1f, scale =>
+            AddSliderStep("fbo scale (y)", 0.01f, 4f, 1f, s =>
             {
-                buffer.FrameBufferScale = new Vector2(scale, buffer.FrameBufferScale.Y);
+                fboScale.Y = s;
+                updateFboScale();
             });
 
-            AddSliderStep("fbo scale (y)", 0.01f, 4f, 1f, scale =>
+            AddSliderStep("instance count", 1, 200, 1, count =>
             {
-                buffer.FrameBufferScale = new Vector2(buffer.FrameBufferScale.X, scale);
+                if (count == bufferedContainers.Count)
+                    return;
+
+                while (bufferedContainers.Count > count)
+                {
+                    Remove(bufferedContainers[^1], true);
+                    bufferedContainers.RemoveAt(bufferedContainers.Count - 1);
+                }
+
+                while (bufferedContainers.Count < count)
+                {
+                    var newContainer = new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                    };
+                    containers.Add(newContainer);
+
+                    ApplyTest(newContainer);
+
+                    var newBuffer = new BufferedContainer
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Child = newContainer,
+                    };
+                    bufferedContainers.Add(newBuffer);
+
+                    Add(newBuffer);
+                }
+
+                updateBlur();
+                updateFboScale();
             });
+        }
+
+        protected override void LoadTest(MaskingTest test)
+        {
+            base.LoadTest(test);
+
+            for (int i = 1; i < containers.Count; i++)
+                ApplyTest(containers[i]);
+        }
+
+        private void updateBlur()
+        {
+            foreach (var bc in bufferedContainers)
+                bc.BlurTo(new Vector2(blur));
+        }
+
+        private void updateFboScale()
+        {
+            foreach (var bc in bufferedContainers)
+                bc.FrameBufferScale = fboScale;
         }
     }
 }
