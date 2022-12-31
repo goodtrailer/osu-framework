@@ -30,17 +30,18 @@ namespace osu.Framework.Graphics.Shaders
 
         public int ChangedCount => changedEnd - changedBegin;
 
-        private T[] arr;
+        private readonly IRenderer renderer;
+        private readonly T[] arr;
         private int changedBegin;
         private int changedEnd;
-        private IRenderer renderer;
 
         public UniformArray(IRenderer renderer, IShader owner, string name, int uniformLocation, int count)
         {
-            this.renderer = renderer;
             Owner = owner;
             Name = name;
             Location = uniformLocation;
+
+            this.renderer = renderer;
             arr = new T[count];
             changedBegin = arr.Length;
             changedEnd = 0;
@@ -97,15 +98,15 @@ namespace osu.Framework.Graphics.Shaders
             changedEnd = 0;
         }
 
-        public ref struct UniformSpan<Type>
-            where Type : unmanaged, IEquatable<Type>
+        public readonly ref struct UniformSpan<Ty>
+            where Ty : unmanaged, IEquatable<Ty>
         {
-            public Span<Type> Span { get; }
+            public Span<Ty> Span { get; }
 
-            private UniformArray<Type> parent;
-            private int begin;
+            private readonly UniformArray<Ty> parent;
+            private readonly int begin;
 
-            internal UniformSpan(UniformArray<Type> parent, int count, int begin)
+            internal UniformSpan(UniformArray<Ty> parent, int count, int begin)
             {
                 this.parent = parent;
                 this.begin = begin;
