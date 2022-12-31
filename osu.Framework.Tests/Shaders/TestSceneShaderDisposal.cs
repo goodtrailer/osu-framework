@@ -85,6 +85,7 @@ namespace osu.Framework.Tests.Shaders
                 private protected override void SetupUniforms()
                 {
                     Uniforms.Add("test", new Uniform<int>(renderer, this, "test", 1));
+                    Uniforms.Add("testArray", new UniformArray<float>(renderer, this, "testArray", 2, 100));
                 }
 
                 private protected override string GetProgramLog() => string.Empty;

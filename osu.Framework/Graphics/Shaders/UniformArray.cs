@@ -50,7 +50,7 @@ namespace osu.Framework.Graphics.Shaders
 
         public void UpdateValue(int index, ref T newValue)
         {
-            if (newValue.Equals(Array[index]))
+            if (newValue.Equals(arr[index]))
                 return;
 
             arr[index] = newValue;
@@ -67,9 +67,6 @@ namespace osu.Framework.Graphics.Shaders
 
         public void UpdateArray(T[] newArray, int begin = 0)
         {
-            if (newArray == Array)
-                return;
-
             if (newArray.Length > arr.Length)
                 throw new ArgumentOutOfRangeException(nameof(newArray), $"{nameof(newArray)} is longer than ${nameof(Array)}");
 
