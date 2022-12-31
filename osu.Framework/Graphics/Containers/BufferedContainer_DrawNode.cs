@@ -19,6 +19,8 @@ namespace osu.Framework.Graphics.Containers
     {
         private class BufferedContainerDrawNode : BufferedDrawNode, ICompositeDrawNode
         {
+            private const int max_kernel_radius = 200;
+
             protected new BufferedContainer<T> Source => (BufferedContainer<T>)base.Source;
 
             protected new CompositeDrawableDrawNode Child => (CompositeDrawableDrawNode)base.Child;
@@ -53,7 +55,7 @@ namespace osu.Framework.Graphics.Containers
 
                 drawOriginal = Source.DrawOriginal;
                 blurSigma = Source.BlurSigma;
-                blurRadius = new Vector2I(Blur.KernelSize(blurSigma.X), Blur.KernelSize(blurSigma.Y));
+                blurRadius = new Vector2I(Math.Min(max_kernel_radius, Blur.KernelSize(blurSigma.X)), Math.Min(max_kernel_radius, Blur.KernelSize(blurSigma.Y)));
                 blurRotation = Source.BlurRotation;
 
                 blurShader = Source.blurShader;
@@ -68,10 +70,15 @@ namespace osu.Framework.Graphics.Containers
                 if (blurRadius.X > 0 || blurRadius.Y > 0)
                 {
                     renderer.PushScissorState(false);
+                    blurShader.Bind();
 
-                    if (blurRadius.X > 0) drawBlurredFrameBuffer(renderer, blurRadius.X, blurSigma.X, blurRotation);
-                    if (blurRadius.Y > 0) drawBlurredFrameBuffer(renderer, blurRadius.Y, blurSigma.Y, blurRotation + 90);
+                    if (blurRadius.X > 0)
+                        drawBlurredFrameBuffer(renderer, blurRadius.X, blurSigma.X, blurRotation);
 
+                    if (blurRadius.Y > 0)
+                        drawBlurredFrameBuffer(renderer, blurRadius.Y, blurSigma.Y, blurRotation + 90, blurSigma.X == blurSigma.Y);
+
+                    blurShader.Unbind();
                     renderer.PopScissorState();
                 }
             }
@@ -92,29 +99,61 @@ namespace osu.Framework.Graphics.Containers
                     base.DrawContents(renderer);
             }
 
-            private void drawBlurredFrameBuffer(IRenderer renderer, int kernelRadius, float sigma, float blurRotation)
+            /// <summary>
+            /// <see cref="blurShader"/> must be bound before calling this method.
+            /// </summary>
+            private void drawBlurredFrameBuffer(IRenderer renderer, int kernelRadius, float sigma, float blurRotation, bool reuseGaussianRadii = false)
             {
-                IFrameBuffer current = SharedData.CurrentEffectBuffer;
-                IFrameBuffer target = SharedData.GetNextEffectBuffer();
+                var currentBuffer = SharedData.CurrentEffectBuffer;
+                var targetBuffer = SharedData.GetNextEffectBuffer();
 
                 renderer.SetBlend(BlendingParameters.None);
 
-                using (BindFrameBuffer(target))
+                float radians = -MathUtils.DegreesToRadians(blurRotation);
+                var blurDirection = new Vector2(MathF.Cos(radians), MathF.Sin(radians));
+                var normalizedBlurDirection = Vector2.Divide(blurDirection, currentBuffer.Size);
+                blurShader.GetUniform<Vector2>("g_BlurDirection").UpdateValue(ref normalizedBlurDirection);
+
+                if (!reuseGaussianRadii)
+                    updateGaussianRadii(kernelRadius, sigma);
+
+                using (BindFrameBuffer(targetBuffer))
+                    renderer.DrawFrameBuffer(currentBuffer, new RectangleF(0, 0, currentBuffer.Texture.Width, currentBuffer.Texture.Height), ColourInfo.SingleColour(Color4.White));
+            }
+
+            private void updateGaussianRadii(int kernelRadius, float sigma)
+            {
+                int gaussianRadiiCount = Math.Clamp(kernelRadius / 2, 1, max_kernel_radius / 2);
+                blurShader.GetUniform<int>("g_GaussianRadiiCount").UpdateValue(ref gaussianRadiiCount);
+
+                float gaussianIntegral = 0f;
+
+                using (var gaussianRadii = blurShader.GetUniformArray<float>("g_GaussianRadii").GetSpan(gaussianRadiiCount))
+                using (var gaussianFactors = blurShader.GetUniformArray<float>("g_GaussianFactors").GetSpan(gaussianRadiiCount))
                 {
-                    blurShader.GetUniform<int>(@"g_Radius").UpdateValue(ref kernelRadius);
-                    blurShader.GetUniform<float>(@"g_Sigma").UpdateValue(ref sigma);
+                    // halve the weight of the center texel, since it'll be hit twice by the blur shader algorithm
+                    float gaussian0 = 0.5f * MathUtils.Gaussian(0, sigma);
+                    float gaussian1 = MathUtils.Gaussian(1, sigma);
 
-                    Vector2 size = current.Size;
-                    blurShader.GetUniform<Vector2>(@"g_TexSize").UpdateValue(ref size);
+                    gaussianFactors.Span[0] = gaussian0 + gaussian1;
+                    gaussianRadii.Span[0] = gaussian1 / gaussianFactors.Span[0];
+                    gaussianIntegral += gaussianFactors.Span[0];
 
-                    float radians = -MathUtils.DegreesToRadians(blurRotation);
-                    Vector2 blur = new Vector2(MathF.Cos(radians), MathF.Sin(radians));
-                    blurShader.GetUniform<Vector2>(@"g_BlurDirection").UpdateValue(ref blur);
+                    for (int i = 1; i < gaussianRadiiCount; i++)
+                    {
+                        float currentRadius = 2 * i;
 
-                    blurShader.Bind();
-                    renderer.DrawFrameBuffer(current, new RectangleF(0, 0, current.Texture.Width, current.Texture.Height), ColourInfo.SingleColour(Color4.White));
-                    blurShader.Unbind();
+                        gaussian0 = MathUtils.Gaussian(currentRadius, sigma);
+                        gaussian1 = MathUtils.Gaussian(currentRadius + 1, sigma);
+
+                        gaussianFactors.Span[i] = gaussian0 + gaussian1;
+                        gaussianRadii.Span[i] = currentRadius + gaussian1 / gaussianFactors.Span[i];
+                        gaussianIntegral += gaussianFactors.Span[i];
+                    }
                 }
+
+                float gaussianInvIntegral = 0.5f / gaussianIntegral;
+                blurShader.GetUniform<float>("g_GaussianInverseIntegral").UpdateValue(ref gaussianInvIntegral);
             }
 
             public List<DrawNode> Children

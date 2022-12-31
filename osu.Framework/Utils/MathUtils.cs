@@ -46,5 +46,31 @@ namespace osu.Framework.Utils
         {
             return radians * (180.0 / Math.PI);
         }
+
+        /// <summary>
+        /// Computes the value of the Gaussian (normal) distribution with a given
+        /// standard deviation at a given point.
+        /// </summary>
+        /// <param name="x">The point to compute the Gaussian distribution at.</param>
+        /// <param name="stdDev">The standard deviation (sigma) of the Gaussian distribution.</param>
+        /// <returns>The value of the Gaussian distribution.</returns>
+        public static float Gaussian(float x, float stdDev)
+        {
+            const float sqrt_2pi = 2.5066283f;
+            return MathF.Exp(-0.5f * x * x / (stdDev * stdDev)) / (stdDev * sqrt_2pi);
+        }
+
+        /// <summary>
+        /// Computes the value of the Gaussian (normal) distribution with a given
+        /// standard deviation at a given point.
+        /// </summary>
+        /// <param name="x">The point to compute the Gaussian distribution at.</param>
+        /// <param name="stdDev">The standard deviation (sigma) of the Gaussian distribution.</param>
+        /// <returns>The value of the Gaussian distribution.</returns>
+        public static double Gaussian(double x, double stdDev)
+        {
+            const double sqrt_2pi = 2.5066282746310007;
+            return Math.Exp(-0.5 * x * x / (stdDev * stdDev)) / (stdDev * sqrt_2pi);
+        }
     }
 }
