@@ -251,6 +251,7 @@ namespace osu.Framework.Tests.Visual.Containers
                     break;
 
                 case MaskingTest.EdgeAndBorderBlur:
+
                     static Drawable createMaskingBox(float scale, float testCornerExponent)
                     {
                         float size = 200 / scale;

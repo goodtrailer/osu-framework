@@ -12,8 +12,8 @@ namespace osu.Framework.Tests.Visual.Containers
 {
     public partial class TestSceneBufferedContainer : TestSceneMasking
     {
-        private List<BufferedContainer> bufferedContainers = new List<BufferedContainer>();
-        private List<Container> containers = new List<Container>();
+        private readonly List<BufferedContainer> bufferedContainers = new List<BufferedContainer>();
+        private readonly List<Container> containers = new List<Container>();
 
         private float blur;
         private float blurRotation;
@@ -113,7 +113,7 @@ namespace osu.Framework.Tests.Visual.Containers
                 bc.FrameBufferScale = fboScale;
         }
 
-        private BufferedContainer createBufferedContainer(Drawable child) => new BufferedContainer()
+        private BufferedContainer createBufferedContainer(Drawable child) => new BufferedContainer
         {
             RelativeSizeAxes = Axes.Both,
             Child = child,
