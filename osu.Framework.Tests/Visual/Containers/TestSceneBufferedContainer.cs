@@ -16,6 +16,7 @@ namespace osu.Framework.Tests.Visual.Containers
         private List<Container> containers = new List<Container>();
 
         private float blur;
+        private float blurRotation;
         private Vector2 fboScale;
 
         public TestSceneBufferedContainer()
@@ -32,6 +33,13 @@ namespace osu.Framework.Tests.Visual.Containers
             {
                 blur = b;
                 updateBlur();
+            });
+
+            AddSliderStep("blur rotation (only blurs x)", 0f, 360f, 0f, r =>
+            {
+                blurRotation = r;
+                updateBlur();
+                updateBlurAngle();
             });
 
             AddSliderStep("fbo scale (x)", 0.01f, 4f, 1f, s =>
@@ -74,6 +82,7 @@ namespace osu.Framework.Tests.Visual.Containers
                     ApplyTest(c);
 
                 updateBlur();
+                updateBlurAngle();
                 updateFboScale();
             });
         }
@@ -89,7 +98,13 @@ namespace osu.Framework.Tests.Visual.Containers
         private void updateBlur()
         {
             foreach (var bc in bufferedContainers)
-                bc.BlurTo(new Vector2(blur));
+                bc.BlurTo(new Vector2(blur, blurRotation == 0f ? blur : 0f));
+        }
+
+        private void updateBlurAngle()
+        {
+            foreach (var bc in bufferedContainers)
+                bc.BlurRotation = blurRotation;
         }
 
         private void updateFboScale()
