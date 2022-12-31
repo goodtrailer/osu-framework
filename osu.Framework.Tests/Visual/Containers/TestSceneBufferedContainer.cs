@@ -24,12 +24,7 @@ namespace osu.Framework.Tests.Visual.Containers
 
             containers.Add(TestContainer);
 
-            var buffer = new BufferedContainer
-            {
-                RelativeSizeAxes = Axes.Both,
-                Child = TestContainer,
-            };
-
+            var buffer = createBufferedContainer(TestContainer);
             bufferedContainers.Add(buffer);
             Add(buffer);
 
@@ -69,16 +64,10 @@ namespace osu.Framework.Tests.Visual.Containers
                         RelativeSizeAxes = Axes.Both,
                     };
                     containers.Add(newContainer);
-
                     ApplyTest(newContainer);
 
-                    var newBuffer = new BufferedContainer
-                    {
-                        RelativeSizeAxes = Axes.Both,
-                        Child = newContainer,
-                    };
+                    var newBuffer = createBufferedContainer(newContainer);
                     bufferedContainers.Add(newBuffer);
-
                     Add(newBuffer);
                 }
 
@@ -106,5 +95,11 @@ namespace osu.Framework.Tests.Visual.Containers
             foreach (var bc in bufferedContainers)
                 bc.FrameBufferScale = fboScale;
         }
+
+        private BufferedContainer createBufferedContainer(Drawable child) => new BufferedContainer()
+        {
+            RelativeSizeAxes = Axes.Both,
+            Child = child,
+        };
     }
 }
