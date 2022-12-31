@@ -40,5 +40,13 @@ namespace osu.Framework.Graphics.Shaders
         /// <returns>The retrieved uniform.</returns>
         Uniform<T> GetUniform<T>(string name)
             where T : unmanaged, IEquatable<T>;
+
+        /// <summary>
+        /// Retrieves a uniform array from the shader.
+        /// </summary>
+        /// <param name="name">The name of the uniform array.</param>
+        /// <returns>The retrieved uniform array.</returns>
+        UniformArray<T> GetUniformArray<T>(string name)
+            where T : unmanaged, IEquatable<T>;
     }
 }

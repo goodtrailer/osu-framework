@@ -40,6 +40,12 @@ namespace osu.Framework.Graphics.Rendering.Dummy
             return new Uniform<T>(renderer, this, name, 0);
         }
 
+        public UniformArray<T> GetUniformArray<T>(string name)
+            where T : unmanaged, IEquatable<T>
+        {
+            return new UniformArray<T>(renderer, this, name, 0, 0);
+        }
+
         public void Dispose()
         {
         }

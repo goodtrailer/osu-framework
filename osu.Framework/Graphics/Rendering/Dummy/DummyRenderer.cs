@@ -187,7 +187,7 @@ namespace osu.Framework.Graphics.Rendering.Dummy
         public IVertexBatch<TVertex> CreateQuadBatch<TVertex>(int size, int maxBuffers) where TVertex : unmanaged, IEquatable<TVertex>, IVertex
             => new DummyVertexBatch<TVertex>();
 
-        void IRenderer.SetUniform<T>(IUniformWithValue<T> uniform)
+        void IRenderer.SetUniform(IUniform uniform)
         {
         }
 

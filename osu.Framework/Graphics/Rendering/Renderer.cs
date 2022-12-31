@@ -972,8 +972,7 @@ namespace osu.Framework.Graphics.Rendering
             }
         }
 
-        internal void SetUniform<T>(IUniformWithValue<T> uniform)
-            where T : unmanaged, IEquatable<T>
+        internal void SetUniform(IUniform uniform)
         {
             if (uniform.Owner == Shader)
                 FlushCurrentBatch(FlushBatchSource.SetUniform);
@@ -991,7 +990,7 @@ namespace osu.Framework.Graphics.Rendering
         /// Informs the graphics device to update the value of the given uniform.
         /// </summary>
         /// <param name="uniform">The uniform to update.</param>
-        protected abstract void SetUniformImplementation<T>(IUniformWithValue<T> uniform) where T : unmanaged, IEquatable<T>;
+        protected abstract void SetUniformImplementation(IUniform uniform);
 
         #endregion
 
@@ -1070,7 +1069,7 @@ namespace osu.Framework.Graphics.Rendering
         void IRenderer.WaitUntilIdle() => WaitUntilIdle();
         void IRenderer.MakeCurrent() => MakeCurrent();
         void IRenderer.ClearCurrent() => ClearCurrent();
-        void IRenderer.SetUniform<T>(IUniformWithValue<T> uniform) => SetUniform(uniform);
+        void IRenderer.SetUniform(IUniform uniform) => SetUniform(uniform);
         void IRenderer.SetDrawDepth(float drawDepth) => SetDrawDepth(drawDepth);
         void IRenderer.PushQuadBatch(IVertexBatch<TexturedVertex2D> quadBatch) => PushQuadBatch(quadBatch);
         void IRenderer.PopQuadBatch() => PopQuadBatch();

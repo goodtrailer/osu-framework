@@ -324,7 +324,7 @@ namespace osu.Framework.Graphics.Veldrid
 
         protected override INativeTexture CreateNativeVideoTexture(int width, int height) => new DummyNativeTexture(this);
 
-        protected override void SetUniformImplementation<T>(IUniformWithValue<T> uniform)
+        protected override void SetUniformImplementation(IUniform uniform)
         {
         }
     }

@@ -104,7 +104,7 @@ namespace osu.Framework.Graphics.OpenGL
 
         protected override void SetShaderImplementation(IShader shader) => GL.UseProgram((GLShader)shader);
 
-        protected override void SetUniformImplementation<T>(IUniformWithValue<T> uniform)
+        protected override void SetUniformImplementation(IUniform uniform)
         {
             switch (uniform)
             {
@@ -112,12 +112,24 @@ namespace osu.Framework.Graphics.OpenGL
                     GL.Uniform1(uniform.Location, b.GetValue() ? 1 : 0);
                     break;
 
+                case IUniformWithArray<bool> bv:
+                    GL.Uniform1(uniform.Location, bv.Count, bv.Array.Select(b => b ? 1 : 0).ToArray());
+                    break;
+
                 case IUniformWithValue<int> i:
                     GL.Uniform1(uniform.Location, i.GetValue());
                     break;
 
+                case IUniformWithArray<int> iv:
+                    GL.Uniform1(uniform.Location, iv.ChangedCount, ref iv.ChangedRef);
+                    break;
+
                 case IUniformWithValue<float> f:
                     GL.Uniform1(uniform.Location, f.GetValue());
+                    break;
+
+                case IUniformWithArray<float> fv:
+                    GL.Uniform1(uniform.Location, fv.ChangedCount, ref fv.ChangedRef);
                     break;
 
                 case IUniformWithValue<Vector2> v2:

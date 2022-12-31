@@ -117,6 +117,17 @@ namespace osu.Framework.Graphics.OpenGL.Shaders
             return (Uniform<T>)Uniforms[name];
         }
 
+        public UniformArray<T> GetUniformArray<T>(string name)
+            where T : unmanaged, IEquatable<T>
+        {
+            if (IsDisposed)
+                throw new ObjectDisposedException(ToString(), "Can not retrieve uniforms from a disposed shader.");
+
+            EnsureShaderCompiled();
+
+            return (UniformArray<T>)Uniforms[name + "[0]"];
+        }
+
         private protected virtual bool CompileInternal()
         {
             foreach (GLShaderPart p in parts)
@@ -145,62 +156,36 @@ namespace osu.Framework.Graphics.OpenGL.Shaders
 
             for (int i = 0; i < uniformCount; i++)
             {
-                GL.GetActiveUniform(this, i, 100, out _, out _, out ActiveUniformType type, out string uniformName);
+                GL.GetActiveUniform(this, i, 100, out _, out int count, out ActiveUniformType type, out string uniformName);
 
-                IUniform uniform;
-
-                switch (type)
+                IUniform uniform = type switch
                 {
-                    case ActiveUniformType.Bool:
-                        uniform = createUniform<bool>(uniformName);
-                        break;
-
-                    case ActiveUniformType.Float:
-                        uniform = createUniform<float>(uniformName);
-                        break;
-
-                    case ActiveUniformType.Int:
-                        uniform = createUniform<int>(uniformName);
-                        break;
-
-                    case ActiveUniformType.FloatMat3:
-                        uniform = createUniform<Matrix3>(uniformName);
-                        break;
-
-                    case ActiveUniformType.FloatMat4:
-                        uniform = createUniform<Matrix4>(uniformName);
-                        break;
-
-                    case ActiveUniformType.FloatVec2:
-                        uniform = createUniform<Vector2>(uniformName);
-                        break;
-
-                    case ActiveUniformType.FloatVec3:
-                        uniform = createUniform<Vector3>(uniformName);
-                        break;
-
-                    case ActiveUniformType.FloatVec4:
-                        uniform = createUniform<Vector4>(uniformName);
-                        break;
-
-                    case ActiveUniformType.Sampler2D:
-                        uniform = createUniform<int>(uniformName);
-                        break;
-
-                    default:
-                        continue;
-                }
+                    ActiveUniformType.Bool => createUniform<bool>(uniformName, count),
+                    ActiveUniformType.Float => createUniform<float>(uniformName, count),
+                    ActiveUniformType.Int => createUniform<int>(uniformName, count),
+                    ActiveUniformType.FloatMat3 => createUniform<Matrix3>(uniformName, count),
+                    ActiveUniformType.FloatMat4 => createUniform<Matrix4>(uniformName, count),
+                    ActiveUniformType.FloatVec2 => createUniform<Vector2>(uniformName, count),
+                    ActiveUniformType.FloatVec3 => createUniform<Vector3>(uniformName, count),
+                    ActiveUniformType.FloatVec4 => createUniform<Vector4>(uniformName, count),
+                    ActiveUniformType.Sampler2D => createUniform<int>(uniformName, count),
+                    _ => throw new InvalidOperationException($"Unsupported {nameof(ActiveUniformType)} {type}."),
+                };
 
                 Uniforms.Add(uniformName, uniform);
                 uniformsValues[i] = uniform;
             }
 
-            IUniform createUniform<T>(string name)
+            IUniform createUniform<T>(string name, int count)
                 where T : unmanaged, IEquatable<T>
             {
                 int location = GL.GetUniformLocation(this, name);
 
-                if (GlobalPropertyManager.CheckGlobalExists(name)) return new GlobalUniform<T>(renderer, this, name, location);
+                if (GlobalPropertyManager.CheckGlobalExists(name))
+                    return new GlobalUniform<T>(renderer, this, name, location);
+
+                if (count > 1)
+                    return new UniformArray<T>(renderer, this, name, location, count);
 
                 return new Uniform<T>(renderer, this, name, location);
             }
