@@ -64,12 +64,14 @@ namespace osu.Framework.Tests.Visual.Containers
                         RelativeSizeAxes = Axes.Both,
                     };
                     containers.Add(newContainer);
-                    ApplyTest(newContainer);
 
                     var newBuffer = createBufferedContainer(newContainer);
                     bufferedContainers.Add(newBuffer);
                     Add(newBuffer);
                 }
+
+                foreach (var c in containers)
+                    ApplyTest(c);
 
                 updateBlur();
                 updateFboScale();
