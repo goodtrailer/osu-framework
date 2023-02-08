@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
@@ -52,6 +53,8 @@ namespace osu.Framework.Platform
                 invalidateWindowSpecifics();
             };
 
+            config.BindWith(FrameworkSetting.WindowedSize, sizeWindowed);
+
             sizeWindowed.MinValueChanged += min =>
             {
                 if (min.Width < 0 || min.Height < 0)
@@ -75,7 +78,6 @@ namespace osu.Framework.Platform
             };
 
             config.BindWith(FrameworkSetting.SizeFullscreen, sizeFullscreen);
-            config.BindWith(FrameworkSetting.WindowedSize, sizeWindowed);
 
             config.BindWith(FrameworkSetting.WindowedPositionX, windowPositionX);
             config.BindWith(FrameworkSetting.WindowedPositionY, windowPositionY);
@@ -133,7 +135,7 @@ namespace osu.Framework.Platform
         /// <summary>
         /// Returns the window modes that the platform should support by default.
         /// </summary>
-        protected virtual IEnumerable<WindowMode> DefaultSupportedWindowModes => Enum.GetValues(typeof(WindowMode)).OfType<WindowMode>();
+        protected virtual IEnumerable<WindowMode> DefaultSupportedWindowModes => Enum.GetValues<WindowMode>();
 
         private Point position;
 
@@ -310,22 +312,22 @@ namespace osu.Framework.Platform
 
         private static IEnumerable<Display> getSDLDisplays()
         {
-            return get().ToArray();
+            int numDisplays = SDL.SDL_GetNumVideoDisplays();
 
-            IEnumerable<Display> get()
+            if (numDisplays <= 0)
+                throw new InvalidOperationException($"Failed to get number of SDL displays. Return code: {numDisplays}. SDL Error: {SDL.SDL_GetError()}");
+
+            var builder = ImmutableArray.CreateBuilder<Display>(numDisplays);
+
+            for (int i = 0; i < numDisplays; i++)
             {
-                int numDisplays = SDL.SDL_GetNumVideoDisplays();
-                if (numDisplays <= 0)
-                    throw new InvalidOperationException($"Failed to get number of SDL displays. Return code: {numDisplays}. SDL Error: {SDL.SDL_GetError()}");
-
-                for (int i = 0; i < numDisplays; i++)
-                {
-                    if (tryGetDisplayFromSDL(i, out Display? display))
-                        yield return display;
-                    else
-                        Debug.Fail($"Failed to retrieve display at index ({i})");
-                }
+                if (tryGetDisplayFromSDL(i, out Display? display))
+                    builder.Add(display);
+                else
+                    Logger.Log($"Failed to retrieve SDL display at index ({i})", level: LogLevel.Error);
             }
+
+            return builder.ToImmutable();
         }
 
         private static bool tryGetDisplayFromSDL(int displayIndex, [NotNullWhen(true)] out Display? display)
@@ -335,6 +337,7 @@ namespace osu.Framework.Platform
 
             if (SDL.SDL_GetDisplayBounds(displayIndex, out var rect) < 0)
             {
+                Logger.Log($"Failed to get display bounds for display at index ({displayIndex}). SDL Error: {SDL.SDL_GetError()}");
                 display = null;
                 return false;
             }
@@ -343,6 +346,7 @@ namespace osu.Framework.Platform
 
             if (numModes <= 0)
             {
+                Logger.Log($"Failed to get display modes for display at index ({displayIndex}) ({rect.w}x{rect.h}). SDL Error: {SDL.SDL_GetError()} ({numModes})");
                 display = null;
                 return false;
             }
