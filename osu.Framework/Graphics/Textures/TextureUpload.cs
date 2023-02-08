@@ -62,11 +62,9 @@ namespace osu.Framework.Graphics.Textures
         {
         }
 
-        private static bool stbiNotFound;
-
         internal static Image<TPixel> LoadFromStream(Stream stream)
         {
-            if (stbiNotFound)
+            if (TextureUploadSharedStatics.StbiNotFound)
                 return Image.Load<TPixel>(stream);
 
             long initialPos = stream.Position;
@@ -84,7 +82,7 @@ namespace osu.Framework.Graphics.Textures
             catch (Exception e)
             {
                 if (e is DllNotFoundException)
-                    stbiNotFound = true;
+                    TextureUploadSharedStatics.StbiNotFound = true;
 
                 Logger.Log($"Texture could not be loaded via STB; falling back to ImageSharp: {e.Message}");
                 stream.Position = initialPos;
@@ -121,6 +119,11 @@ namespace osu.Framework.Graphics.Textures
         }
 
         #endregion
+    }
+
+    internal static class TextureUploadSharedStatics
+    {
+        public static bool StbiNotFound;
     }
 
     public class TextureUpload : TextureUpload<Rgba32>

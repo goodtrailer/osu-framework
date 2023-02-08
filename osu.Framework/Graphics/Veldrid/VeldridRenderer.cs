@@ -11,15 +11,14 @@ using osu.Framework.Graphics.Rendering.Dummy;
 using osu.Framework.Graphics.Shaders;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Graphics.Veldrid.Batches;
-using osu.Framework.Platform;
 using osu.Framework.Graphics.Veldrid.Buffers;
+using osu.Framework.Platform;
 using osu.Framework.Statistics;
 using osuTK;
 using osuTK.Graphics;
-using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp;
 using Veldrid;
 using Veldrid.OpenGL;
-using PixelFormat = Veldrid.PixelFormat;
 using PrimitiveTopology = Veldrid.PrimitiveTopology;
 
 namespace osu.Framework.Graphics.Veldrid
@@ -309,7 +308,7 @@ namespace osu.Framework.Graphics.Veldrid
         protected override IShader CreateShader(string name, params IShaderPart[] parts)
             => new DummyShader(this);
 
-        public override IFrameBuffer CreateFrameBuffer(RenderBufferFormat[]? renderBufferFormats = null, TextureFilteringMode filteringMode = TextureFilteringMode.Linear)
+        public override IFrameBuffer CreateFrameBuffer(RenderBufferFormat[]? renderBufferFormats = null, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, TextureFormat textureFormat = default)
             => new DummyFrameBuffer(this);
 
         protected override IVertexBatch<TVertex> CreateLinearBatch<TVertex>(int size, int maxBuffers, Rendering.PrimitiveTopology primitiveType)
@@ -319,7 +318,7 @@ namespace osu.Framework.Graphics.Veldrid
             => new VeldridQuadBatch<TVertex>(this, size, maxBuffers);
 
         protected override INativeTexture CreateNativeTexture(int width, int height, bool manualMipmaps = false, TextureFilteringMode filteringMode = TextureFilteringMode.Linear,
-                                                              Rgba32 initialisationColour = default)
+                                                              Color initialisationColour = default, TextureFormat textureFormat = default)
             => new DummyNativeTexture(this);
 
         protected override INativeTexture CreateNativeVideoTexture(int width, int height) => new DummyNativeTexture(this);

@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using osuTK.Graphics.ES30;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -14,8 +15,13 @@ namespace osu.Framework.Utils
     public static class Pixel<TPixel>
         where TPixel : unmanaged, IPixel<TPixel>
     {
+        [SuppressMessage("ReSharper", "StaticMemberInGenericType")]
         public static readonly PixelFormat FORMAT = getFormat();
+
+        [SuppressMessage("ReSharper", "StaticMemberInGenericType")]
         public static readonly PixelType TYPE = getType();
+
+        [SuppressMessage("ReSharper", "StaticMemberInGenericType")]
         public static readonly int BYTES_PER_PIXEL = getBytesPerPixel();
 
         private static PixelFormat getFormat()
@@ -23,8 +29,8 @@ namespace osu.Framework.Utils
             switch (typeof(TPixel))
             {
                 case Type rgba32Type when rgba32Type == typeof(Rgba32):
-                case Type rgbaVecType when rgbaVecType == typeof(RgbaVector):
                 case Type rgba64Type when rgba64Type == typeof(Rgba64):
+                case Type rgbaVecType when rgbaVecType == typeof(RgbaVector):
                     return PixelFormat.Rgba;
 
                 case Type rgb24Type when rgb24Type == typeof(Rgb24):

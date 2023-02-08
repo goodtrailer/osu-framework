@@ -9,7 +9,6 @@ using osu.Framework.Graphics.Rendering;
 using osu.Framework.Graphics.Textures;
 using osuTK;
 using osuTK.Graphics.ES30;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace osu.Framework.Graphics.OpenGL.Buffers
 {

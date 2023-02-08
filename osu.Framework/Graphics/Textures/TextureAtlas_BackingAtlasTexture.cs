@@ -3,7 +3,6 @@
 
 using System;
 using System.Runtime.CompilerServices;
-using NuGet.Common;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Rendering;
 using SixLabors.ImageSharp.PixelFormats;

@@ -6,29 +6,23 @@ namespace osu.Framework.Graphics.Textures
     public enum TextureFormat
     {
         // Default texture format
-
         SRGBA8,
 
-        // Misc
-
+        // Misc formats
         L8,
         A8,
 
-        // RG
-
+        // RG formats
         RG16UI,
 
-        // RGB
-
+        // RGB formats
         RGB8,
         SRGB8,
         RGB8UI,
         RGB16UI,
 
-        // RGBA
-
+        // RGBA formats (SRGBA8 not below; moved to top as default)
         RGBA8,
-        // SRGBA8, (moved to top as default)
         RGBA16F,
         RGBA32F,
         RGBA8UI,

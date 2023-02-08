@@ -319,7 +319,7 @@ namespace osu.Framework.Graphics.OpenGL
         public override IFrameBuffer CreateFrameBuffer(RenderBufferFormat[]? renderBufferFormats = null, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, TextureFormat textureFormat = default)
             => new GLFrameBuffer(this, renderBufferFormats, filteringMode, textureFormat);
 
-        protected override INativeTexture CreateNativeTexture(int width, int height, bool manualMipmaps = false, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, Color initialisationColour = default, TextureFormat textureFormat = TextureFormat.SRGB8)
+        protected override INativeTexture CreateNativeTexture(int width, int height, bool manualMipmaps = false, TextureFilteringMode filteringMode = TextureFilteringMode.Linear, Color initialisationColour = default, TextureFormat textureFormat = default)
             => new GLTexture(this, width, height, manualMipmaps, filteringMode, initialisationColour, textureFormat);
 
         protected override INativeTexture CreateNativeVideoTexture(int width, int height) => new GLVideoTexture(this, width, height);

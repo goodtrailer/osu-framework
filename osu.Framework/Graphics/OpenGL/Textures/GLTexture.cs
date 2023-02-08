@@ -7,13 +7,11 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using osu.Framework.Development;
-using osu.Framework.Extensions.ImageExtensions;
 using osuTK.Graphics.ES30;
 using osu.Framework.Graphics.Rendering;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Platform;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using System.Diagnostics;
 
 namespace osu.Framework.Graphics.OpenGL.Textures
